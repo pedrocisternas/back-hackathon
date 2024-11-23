@@ -21,8 +21,9 @@ export const embeddingService = {
 
             // Combinar vectores (promedio simple)
             const combinedVector = hechoVector.map((val, i) => 
-                (val + emocionVector[i]) / 2
+                (val * emocionVector[i])
             );
+            console.log(combinedVector);
 
             return {
                 hechoVector,
@@ -67,6 +68,18 @@ export const embeddingService = {
                         emocion,
                         user_id,
                         tipo: 'emocion',
+                        timestamp: new Date().toISOString(),
+                        pair_id: baseId  // ID para relacionar pares hecho-emoción
+                    }
+                },
+                {
+                    id: `${baseId}-combined`,
+                    values: vectors.combinedVector,
+                    metadata: {
+                        hecho,
+                        emocion,
+                        user_id,
+                        tipo: 'combinado',
                         timestamp: new Date().toISOString(),
                         pair_id: baseId  // ID para relacionar pares hecho-emoción
                     }

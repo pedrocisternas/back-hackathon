@@ -2,30 +2,65 @@ import OpenAI from '../config/openai.js';
 import { factService } from './factService.js';
 
 export const journalProcessor = {
-    async processJournalEntry(text) {
+    async processJournalEntry(text, user_id) {
         try {
-            console.log('🔵 Iniciando procesamiento de entrada:', text);
+            const completion = await OpenAI.chat.completions.create({
+                model: "gpt-4",
+                messages: [
+                    {
+                        role: "system",
+                        content: `Analiza el texto y extrae los hechos y emociones principales.
+                        
+                        REGLAS PARA HECHOS:
+                        - Usa frases cortas (3-5 palabras máximo)
+                        - Mantén el contexto importante
+                        - Usa verbos en infinitivo (ej: "jugar fútbol con amigos")
+                        - Evita detalles específicos de tiempo/lugar
+                        - Normaliza actividades similares
 
-            // 1. Obtener estructura de referencia
-            const referenceStructure = await factService.getReferenceStructure();
-            console.log('📚 Estructura de referencia obtenida:', JSON.stringify(referenceStructure, null, 2));
-            
-            // 2. Procesar el texto con OpenAI
-            const analysis = await this.analyzeText(text, referenceStructure);
-            
-            // 3. Asegurarnos de que analysis.hechos existe y es un array
-            if (!analysis.hechos || !Array.isArray(analysis.hechos)) {
-                console.error('❌ La respuesta de OpenAI no tiene el formato esperado:', analysis);
-                throw new Error('Formato de respuesta inválido de OpenAI');
-            }
-            
-            // 4. Procesar cada hecho identificado
-            const results = await Promise.all(
-                analysis.hechos.map(fact => factService.upsertFact(fact))
-            );
-            console.log('Procesamiento exitoso.');
+                        EMOCIONES PERMITIDAS:
+                        alegría, tristeza, enojo, miedo, sorpresa, amor, 
+                        orgullo, vergüenza, culpa, gratitud, ansiedad, 
+                        serenidad, frustración, entusiasmo, satisfacción, felicidad
 
-            return results;
+                        FORMATO DE RESPUESTA:
+                        {
+                            "entries": [
+                                {
+                                    "hecho": "frase corta descriptiva",
+                                    "emocion": "emoción de la lista"
+                                }
+                            ]
+                        }
+
+                        EJEMPLOS CORRECTOS:
+                        ✅ "jugar fútbol con amigos" + "alegría"
+                        ✅ "cocinar en familia" + "amor"
+                        ✅ "presentar en trabajo" + "ansiedad"
+
+                        EJEMPLOS INCORRECTOS:
+                        ❌ "jugar un partido muy emocionante de fútbol" (muy largo)
+                        ❌ "felicidad extrema" (emoción no en lista)
+                        ❌ "jugué fútbol ayer" (tiempo específico)`
+                    },
+                    {
+                        role: "user",
+                        content: text
+                    }
+                ],
+                temperature: 0.7,
+                max_tokens: 2000
+            });
+
+            const response = JSON.parse(completion.choices[0].message.content);
+            
+            // Transformar y validar la respuesta
+            return response.entries.map(entry => ({
+                hecho: entry.hecho.toLowerCase(),
+                emocion: entry.emocion.toLowerCase(),
+                user_id
+            }));
+
         } catch (error) {
             console.error('❌ Error en processJournalEntry:', error);
             throw error;

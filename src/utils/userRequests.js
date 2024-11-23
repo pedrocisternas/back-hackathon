@@ -180,7 +180,7 @@ export async function determineMoodFromEntries(entries) {
 
         // Enviar la lista de emociones a OpenAI para determinar el mood
         const response = await OpenAI.chat.completions.create({
-            model: "gpt-3.5-turbo", // Actualizado el modelo
+            model: "gpt-4o-mini", // Actualizado el modelo
             messages: [
                 {
                     role: "system",
@@ -260,7 +260,7 @@ export async function generateOpenAIRecommendations(recommendations) {
 
         // Construir el mensaje para OpenAI
         const response = await OpenAI.chat.completions.create({
-            model: "gpt-3.5-turbo",
+            model: "gpt-4o-mini",
             messages: [
                 {
                     role: "system",
@@ -294,9 +294,158 @@ export async function generateOpenAIRecommendations(recommendations) {
 }
 
 export async function recommendGoodHabits(userId) {
+    try {
+        // Buscar vectores similares a emociones positivas
+        const searchText = "felicidad alegría optimismo entusiasmo";
+        
+        // Generar embedding para la búsqueda
+        const searchEmbedding = await embeddingService.generateEmbeddings({
+            hecho: searchText,
+            emocion: searchText
+        });
 
+        // Buscar hechos similares usando el vector de emoción
+        const similarEntries = await embeddingService.searchSimilar({
+            vector: searchEmbedding.emocionVector,
+            tipo: 'emocion',
+            topK: 1000
+        });
+
+        // Filtrar solo los hechos del usuario específico
+        const userEntries = similarEntries.filter(entry => 
+            entry.metadata.user_id === userId
+        );
+
+        // Agrupar hechos similares y contar ocurrencias
+        const habitCounts = {};
+        userEntries.forEach(entry => {
+            if (entry.score > 0.84) { // Solo considerar hechos con alta similitud
+                const habit = entry.metadata.hecho;
+                habitCounts[habit] = (habitCounts[habit] || 0) + 1;
+            }
+        });
+
+        // Convertir a array y ordenar por frecuencia
+        const sortedHabits = Object.entries(habitCounts)
+            .map(([habit]) => ({
+                habit,
+                score: userEntries.find(e => e.metadata.hecho === habit).score
+            }))
+        console.log(sortedHabits);
+
+        // Generar mensaje personalizado con OpenAI
+        const response = await OpenAI.chat.completions.create({
+            model: "gpt-4o-mini",
+            messages: [
+                {
+                    role: "system",
+                    content: "Eres un asistente que identifica y refuerza buenos hábitos"
+                },
+                {
+                    role: "user",
+                    content: `Estos son los buenos hábitos repetidos del usuario:
+                    ${sortedHabits.map(h => 
+                        `${h.habit} , ${(h.score * 100)}% de felicidad)`
+                    ).join("\n")}
+                    
+                    Genera 3 mensajes en formato JSON reconociendo estos buenos hábitos,
+                    cada uno con una propiedad "mensaje". Los mensajes deben ser cortos,
+                    directos y motivadores, sin signos de exclamación ni preguntas. Se breve con cada uno y no uses exclamaciones.
+                    Deben ser 3 mensajes distintos en formato {"","",""}.`
+                }
+            ],
+            temperature: 0.7,
+            max_tokens: 200,
+            response_format: { type: "json_object" }
+        });
+
+        const generatedText = response.choices[0].message.content;
+        return JSON.parse(generatedText).recommendations || JSON.parse(generatedText);
+
+    } catch (error) {
+        console.error('Error al obtener buenos hábitos:', error);
+        throw error;
+    }
 }
 
 export async function recommendDoBetter(userId) {
+    try {
+        // Buscar vectores similares a emociones positivas
+        const searchText = "enojo tristeza frustración";
+        
+        // Generar embedding para la búsqueda
+        const searchEmbedding = await embeddingService.generateEmbeddings({
+            hecho: searchText,
+            emocion: searchText
+        });
+
+        // Buscar hechos similares usando el vector de emoción
+        const similarEntries = await embeddingService.searchSimilar({
+            vector: searchEmbedding.emocionVector,
+            tipo: 'emocion',
+            topK: 1000
+        });
+
+        // Filtrar solo los hechos del usuario específico
+        const userEntries = similarEntries.filter(entry => 
+            entry.metadata.user_id === userId
+        );
+
+        // Agrupar hechos similares y contar ocurrencias
+        const habitCounts = {};
+        userEntries.forEach(entry => {
+            if (entry.score > 0.88) { // Solo considerar hechos con alta similitud
+                const habit = entry.metadata.hecho;
+                habitCounts[habit] = (habitCounts[habit] || 0) + 1;
+            }
+        });
+
+        // Convertir a array y ordenar por frecuencia
+        const sortedHabits = Object.entries(habitCounts)
+            .map(([habit]) => ({
+                habit,
+                score: userEntries.find(e => e.metadata.hecho === habit).score
+            }))
+        console.log(sortedHabits);
+
+        // Generar mensaje personalizado con OpenAI
+        const response = await OpenAI.chat.completions.create({
+            model: "gpt-4o-mini",
+            messages: [
+                {
+                    role: "system",
+                    content: "Eres un asistente que identifica y refuerza cosas por mejorar"
+                },
+                {
+                    role: "user",
+                    content: `Estas son cosas que hacen que un usuario se sienta mal:
+                    ${sortedHabits.map(h => 
+                        `${h.habit} , ${(h.score * 100)}% de felicidad)`
+                    ).join("\n")}
+                    
+                    Genera exactamente 3 recomendaciones en el siguiente formato JSON:
+                    {
+                        "recommendations": [
+                            {"mensaje": "Podrías mejorar..."},
+                            {"mensaje": "Podrías mejorar..."},
+                            {"mensaje": "Podrías mejorar..."}
+                        ]
+                    }
+                    Usa un tono optimista e informal en español (chileno). Cada mensaje debe comenzar con "Podrías mejorar".`
+                }
+            ],
+            temperature: 0.7,
+            max_tokens: 200,
+            response_format: { type: "json_object" }
+        });
+
+        const generatedText = response.choices[0].message.content;
+        return JSON.parse(generatedText).recommendations || JSON.parse(generatedText);
+
+    } catch (error) {
+        console.error('Error al obtener buenos hábitos:', error);
+        throw error;
+    }
+    
     
 }

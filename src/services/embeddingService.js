@@ -23,6 +23,7 @@ export const embeddingService = {
             const combinedVector = hechoVector.map((val, i) => 
                 (val * emocionVector[i])
             );
+            console.log(combinedVector);
 
             return {
                 hechoVector,

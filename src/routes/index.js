@@ -4,6 +4,7 @@ import { journalProcessor } from '../services/journalProcessor.js';
 import { aiService } from '../services/aiService.js';
 import multer from 'multer';
 import { embeddingService } from '../services/embeddingService.js';
+import { getUserEntries, analyzeMood, determineMoodFromEntries } from '../utils/userRequests.js';
 
 const router = express.Router();
 
@@ -90,6 +91,26 @@ router.post('/embeddings', async (req, res) => {
         console.error('❌ Error en POST /embeddings:', error);
         res.status(500).json({ error: error.message });
     }
+});
+
+router.post('/mood', async (req, res) => {
+  const { userId } = req.body;
+
+  if (!userId) {
+    return res.status(400).json({ error: 'Falta el ID de usuario.' });
+  }
+
+  try {
+
+    const mood = await analyzeMood(userId);
+
+    return res.status(200).json({
+      mood,
+    });
+  } catch (error) {
+    console.error('Error al procesar las recomendaciones:', error);
+    return res.status(500).json({ error: 'Error al obtener el estado de ánimo y las recomendaciones.' });
+  }
 });
 
 // Endpoint para buscar similitudes

@@ -22,7 +22,30 @@ export const aiService = {
       }
 
       console.log('📝 Texto a procesar:', text);
-      const results = await journalProcessor.processJournalEntry(text);
+      // Create journal entry in Supabase
+      const { data: journalEntry, error } = await supabase
+        .from('journal_entries')
+        .insert([
+          {
+            content: text,
+            type: payload.type,
+            user_id: payload.user_id,
+          },
+        ])
+        .select()
+        .single();
+
+      if (error) {
+        console.error('Error creating journal entry:', error);
+        throw error;
+      }
+
+      console.log('📔 Journal entry created:', journalEntry);
+
+      const results = await journalProcessor.processJournalEntry(
+        text,
+        payload.user_id
+      );
       return results;
     } catch (error) {
       console.error('❌ Error en processInput:', error);

@@ -1,8 +1,25 @@
-const express = require("express");
+import express from 'express';
+import { factService } from '../services/factService.js';
+
 const router = express.Router();
 
-router.get("/", (req, res) => {
-  res.send("API is working!");
+// Ruta de prueba para upsertFact
+router.post('/facts', async (req, res) => {
+    try {
+        const result = await factService.upsertFact(req.body);
+        res.json(result);
+    } catch (error) {
+        console.error('Error en POST /facts:', error);
+        res.status(500).json({ error: error.message });
+    }
 });
 
-module.exports = router;
+// Ruta de prueba simple
+router.get('/ping', (req, res) => {
+    res.json({ message: 'pong', timestamp: new Date().toISOString() });
+});
+
+
+export default router;
+
+

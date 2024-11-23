@@ -3,24 +3,26 @@ import { factService } from '../services/factService.js';
 import { journalProcessor } from '../services/journalProcessor.js';
 import { aiService } from '../services/aiService.js';
 import multer from 'multer';
+import { embeddingService } from '../services/embeddingService.js';
 
 const router = express.Router();
 
 // Ruta de prueba con texto hardcodeado
-router.get('/test-journal', async (req, res) => {
+router.post('/journal', async (req, res) => {
   try {
-    const testText = `
-            Hoy fue un día interesante. Jugué fútbol con mis amigos y metí dos goles, 
-            me sentí muy feliz y orgulloso. Después visité a mamá y cocinamos juntos, 
-            lo cual me alegró mucho. También tuve una reunión en el trabajo que fue 
-            algo estresante, pero al final salió bien.
-        `;
+    const { text, user_id } = req.body;
 
-    console.log('🚀 Iniciando prueba con texto:', testText);
-    const results = await journalProcessor.processJournalEntry(testText);
+    if (!text || !user_id) {
+      return res.status(400).json({ 
+        error: 'Se requieren los campos "text" y "user_id"' 
+      });
+    }
+
+    console.log('🚀 Procesando entrada de diario:', { text, user_id });
+    const results = await journalProcessor.processJournalEntry(text, user_id);
     res.json(results);
   } catch (error) {
-    console.error('❌ Error en test-journal:', error);
+    console.error('❌ Error en POST /journal:', error);
     res.status(500).json({ error: error.message });
   }
 });
@@ -49,6 +51,86 @@ router.post('/chat', async (req, res) => {
     console.error('Error en POST /chat:', error);
     res.status(500).json({ error: error.message });
   }
+});
+
+// Endpoint para crear embeddings y almacenarlos en Pinecone
+router.post('/embeddings', async (req, res) => {
+    try {
+        const { hecho, emocion, user_id } = req.body;
+
+        if (!hecho || !emocion || !user_id) {
+            return res.status(400).json({ 
+                error: 'Se requieren los campos "hecho", "emocion" y "user_id"' 
+            });
+        }
+
+        console.log('📥 Procesando:', { hecho, emocion, user_id });
+
+        // 1. Generar embeddings
+        const vectors = await embeddingService.generateEmbeddings({ 
+            hecho, 
+            emocion 
+        });
+
+        // 2. Almacenar en Pinecone
+        await embeddingService.storeVectors({ 
+            hecho, 
+            emocion, 
+            vectors,
+            user_id 
+        });
+
+        res.json({ 
+            success: true, 
+            message: 'Embeddings generados y almacenados',
+            data: { hecho, emocion, user_id }
+        });
+
+    } catch (error) {
+        console.error('❌ Error en POST /embeddings:', error);
+        res.status(500).json({ error: error.message });
+    }
+});
+
+// Endpoint para buscar similitudes
+router.post('/search', async (req, res) => {
+    try {
+        const { texto, tipo = 'hecho', topK = 5 } = req.body;
+
+        if (!texto) {
+            return res.status(400).json({ 
+                error: 'Se requiere el campo "texto"' 
+            });
+        }
+
+        // 1. Generar embedding para el texto de búsqueda
+        const searchEmbedding = await embeddingService.generateEmbeddings({ 
+            hecho: texto, 
+            emocion: texto // usamos el mismo texto para ambos ya que solo necesitamos uno
+        });
+
+        // 2. Buscar similitudes usando el vector correspondiente
+        const vector = tipo === 'hecho' ? searchEmbedding.hechoVector : searchEmbedding.emocionVector;
+        const results = await embeddingService.searchSimilar({ 
+            vector,
+            tipo,
+            topK 
+        });
+
+        res.json({ 
+            success: true,
+            results: results.map(match => ({
+                hecho: match.metadata.hecho,
+                emocion: match.metadata.emocion,
+                score: match.score,
+                user_id: match.metadata.user_id
+            }))
+        });
+
+    } catch (error) {
+        console.error('❌ Error en POST /search:', error);
+        res.status(500).json({ error: error.message });
+    }
 });
 
 export default router;

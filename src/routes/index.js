@@ -54,17 +54,6 @@ router.post('/journal', async (req, res) => {
     }
   });
   
-  // Ruta de prueba para upsertFact
-  router.post('/facts', async (req, res) => {
-    try {
-      const result = await factService.upsertFact(req.body);
-      res.json(result);
-    } catch (error) {
-      console.error('Error en POST /facts:', error);
-      res.status(500).json({ error: error.message });
-    }
-  });
-  
   const upload = multer();
 
 // Endpoint para crear embeddings y almacenarlos en Pinecone

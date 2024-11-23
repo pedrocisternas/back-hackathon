@@ -1,5 +1,6 @@
 import OpenAI from '../config/openai.js';
 import { initializePinecone } from '../config/pinecone.js';
+import { embeddingService } from '../services/embeddingService.js';
 
 export async function getUserQueryVector(userId) {
     try {
@@ -23,7 +24,7 @@ export async function getUserQueryVector(userId) {
             combinado: match.values  // Aquí añades el embedding combinado
         }));
 
-        
+
         // Si no se encontraron entradas, devolver un vector vacío o lanzar un error
         if (!userEntries.length) {
             throw new Error('No se encontraron entradas para el usuario');
@@ -41,6 +42,63 @@ export async function getUserQueryVector(userId) {
         throw error;
     }
 }
+
+
+export async function getTodayUserQueryVector(userId) {
+    try {
+        const index = await initializePinecone();
+        const arbitraryVector = new Array(1536).fill(0);
+
+        // Calcular timestamps para hoy
+        const today = new Date();
+        today.setHours(0, 0, 0, 0);
+        const startOfDay = Math.floor(today.getTime() / 1000);
+        const endOfDay = Math.floor((today.getTime() + 24 * 60 * 60 * 1000) / 1000);
+
+        console.log('Buscando entradas para:', {
+            userId,
+            startOfDay,
+            endOfDay,
+            startOfDayDate: new Date(startOfDay * 1000),
+            endOfDayDate: new Date(endOfDay * 1000)
+        });
+
+        const queryResponse = await index.query({
+            vector: arbitraryVector,
+            filter: {
+                user_id: userId
+            },
+            topK: 1000,
+            includeMetadata: true,
+            includeValues: true,
+        });
+
+        // Filtrar los resultados manualmente por timestamp
+        const todayEntries = queryResponse.matches.filter(match => {
+            const entryTimestamp = match.metadata.timestamp;
+            return entryTimestamp >= startOfDay && entryTimestamp <= endOfDay;
+        });
+
+        console.log('Resultados encontrados:', {
+            totalMatches: todayEntries.length,
+            sampleMetadata: todayEntries[0]?.metadata
+        });
+
+        if (!todayEntries.length) {
+            throw new Error('No se encontraron entradas del usuario para el día de hoy');
+        }
+
+        // Obtener el embedding combinado de cada entrada y calcular el promedio
+        const combinedVectors = todayEntries.map(entry => entry.values);
+        const todayUserQueryVector = averageVectors(combinedVectors);
+
+        return todayUserQueryVector;
+    } catch (error) {
+        console.error('Error al obtener el vector de consulta del usuario para hoy:', error);
+        throw error;
+    }
+}
+
 export async function getUserEntries(userId) {
     try {
         const index = await initializePinecone(); // Inicializar Pinecone
@@ -95,7 +153,6 @@ export async function analyzeMood(userId) {
         includeMetadata: true,  // Asegúrate de incluir la metadata
     });
     
-
     // Solo trabajar con los k vecinos más cercanos que se devuelven de la consulta
     const similarEntries = queryResponse.matches.map(match => match.metadata);
     console.log(similarEntries);
@@ -116,7 +173,7 @@ export async function determineMoodFromEntries(entries) {
     return mood;
 }
 
-export async function determineMoodFromOpenAI(emotions) {
+    export async function determineMoodFromOpenAI(emotions) {
     try {
         // Formatear la lista de emociones para enviar a OpenAI
         const emotionList = emotions.join(", ");
@@ -147,4 +204,99 @@ export async function determineMoodFromOpenAI(emotions) {
         console.error('Error al obtener el mood desde OpenAI:', error);
         return 'Estado de ánimo no disponible';
     }
+}
+export async function recommendFacts(userId) {
+    try {
+        // Buscar vectores similares a emociones positivas
+        const searchText = "felicidad alegría optimismo entusiasmo";
+        
+        // Generar embedding para la búsqueda
+        const searchEmbedding = await embeddingService.generateEmbeddings({
+            hecho: searchText,
+            emocion: searchText
+        });
+
+        // Buscar hechos similares usando el vector de emoción
+        const similarEntries = await embeddingService.searchSimilar({
+            vector: searchEmbedding.emocionVector,
+            tipo: 'emocion',
+            topK: 1000
+        });
+
+        // Filtrar solo los hechos del usuario específico
+        const userEntries = similarEntries.filter(entry => 
+            entry.metadata.user_id === userId
+        );
+
+        // Extraer y devolver los hechos recomendados
+        const recommendations = userEntries.map(entry => ({
+            hecho: entry.metadata.hecho,
+            emocion: entry.metadata.emocion,
+            score: entry.score
+        }));
+        // filtrar los que tengan score mayor a 0.7
+        const filteredRecommendations = recommendations.filter(recommendation => recommendation.score > 0.84);
+        console.log(filteredRecommendations);
+
+        // enviar un mensaje a openai con recomendaciones para el usuario basado en las filteredRecommendations que son las que lo hacen feliz
+        const openaiRecommendations = await generateOpenAIRecommendations(filteredRecommendations);
+        console.log(openaiRecommendations);
+
+        return openaiRecommendations;
+
+
+    } catch (error) {
+        console.error('Error al generar recomendaciones:', error);
+        throw error;
+    }
+}
+
+export async function generateOpenAIRecommendations(recommendations) {
+    try {
+        // Formatear las recomendaciones en un formato legible
+        const formattedRecommendations = recommendations.map((rec, index) => 
+            `${index + 1}. ${rec.hecho} (${(rec.score * 100).toFixed(1)}% de felicidad)`
+        ).join("\n");
+
+        // Construir el mensaje para OpenAI
+        const response = await OpenAI.chat.completions.create({
+            model: "gpt-3.5-turbo",
+            messages: [
+                {
+                    role: "system",
+                    content: "Eres un asistente que genera recomendaciones personalizadas basadas en actividades que hacen feliz a las personas."
+                },
+                {
+                    role: "user",
+                    content: `Estas son las actividades que hacen feliz a un usuario, ordenadas por cuánto le alegran: 
+                    ${formattedRecommendations}
+                    
+                    Genera 3 recomendaciones en formato JSON,
+                     cada una con una propiedad "mensaje", sugiriendo actividades para ser feliz.no seas directo en mencionar la felicidad, solo di cosas como "aprender un nuevo instrumento", "visita a un amigo", etc. No uses preguntas en las recomendaciones,
+                     Las recomendaciones deben estar ligadas a las que te entregue y sus puntajes y no deben contener signos de exclamación, pregunta, etc. Haz recomendaciones cortas y directas.
+                    `
+                }
+            ],
+            temperature: 0.7,
+            max_tokens: 200,
+            response_format: { type: "json_object" }
+        });
+
+        // Extraer y convertir la respuesta a JSON
+        const generatedText = response.choices[0].message.content;
+        const recommendationsJSON = JSON.parse(generatedText);
+
+        return recommendationsJSON.recommendations || recommendationsJSON;
+    } catch (error) {
+        console.error("Error al generar recomendaciones con OpenAI:", error);
+        throw error;
+    }
+}
+
+export async function recommendGoodHabits(userId) {
+
+}
+
+export async function recommendDoBetter(userId) {
+    
 }

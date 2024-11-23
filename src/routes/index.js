@@ -7,38 +7,18 @@ import { embeddingService } from '../services/embeddingService.js';
 
 const router = express.Router();
 
-// Ruta de prueba con texto hardcodeado
-router.post('/journal', async (req, res) => {
-  try {
-    const { text, user_id } = req.body;
-
-    if (!text || !user_id) {
-      return res.status(400).json({ 
-        error: 'Se requieren los campos "text" y "user_id"' 
-      });
+router.post('/journal-fast-response', async (req, res) => {
+    try {
+      console.log('🚀 Iniciando respuesta rápida con payload:', req.body);
+      const payload = req.body;
+  
+      const results = await aiService.getQuickAnalysis(payload);
+      res.json(results);
+    } catch (error) {
+      console.error('Error en POST /journal-fast-response:', error);
+      res.status(500).json({ error: error.message });
     }
-
-    console.log('🚀 Procesando entrada de diario:', { text, user_id });
-    const results = await journalProcessor.processJournalEntry(text, user_id);
-    res.json(results);
-  } catch (error) {
-    console.error('❌ Error en POST /journal:', error);
-    res.status(500).json({ error: error.message });
-  }
-});
-
-// Ruta de prueba para upsertFact
-router.post('/facts', async (req, res) => {
-  try {
-    const result = await factService.upsertFact(req.body);
-    res.json(result);
-  } catch (error) {
-    console.error('Error en POST /facts:', error);
-    res.status(500).json({ error: error.message });
-  }
-});
-
-const upload = multer();
+  });
 
 router.post('/chat', async (req, res) => {
   try {
@@ -52,6 +32,40 @@ router.post('/chat', async (req, res) => {
     res.status(500).json({ error: error.message });
   }
 });
+
+// Rutas de prueba (se pueden eliminar)
+// Ruta de prueba con texto hardcodeado
+router.post('/journal', async (req, res) => {
+    try {
+      const { text, user_id } = req.body;
+  
+      if (!text || !user_id) {
+        return res.status(400).json({ 
+          error: 'Se requieren los campos "text" y "user_id"' 
+        });
+      }
+  
+      console.log('🚀 Procesando entrada de diario:', { text, user_id });
+      const results = await journalProcessor.processJournalEntry(text, user_id);
+      res.json(results);
+    } catch (error) {
+      console.error('❌ Error en POST /journal:', error);
+      res.status(500).json({ error: error.message });
+    }
+  });
+  
+  // Ruta de prueba para upsertFact
+  router.post('/facts', async (req, res) => {
+    try {
+      const result = await factService.upsertFact(req.body);
+      res.json(result);
+    } catch (error) {
+      console.error('Error en POST /facts:', error);
+      res.status(500).json({ error: error.message });
+    }
+  });
+  
+  const upload = multer();
 
 // Endpoint para crear embeddings y almacenarlos en Pinecone
 router.post('/embeddings', async (req, res) => {

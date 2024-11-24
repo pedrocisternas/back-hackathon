@@ -243,8 +243,10 @@ export const aiService = {
                     
                     Ejemplos de mapeo:
                     - "Me recomendarías seguir estudiando?" -> getEmotionsFromFact(userId, "estudiar")
-                    - "Por qué me siento así?" -> getEmotionalInsights(userId, "tristeza")
+                    - "Por qué me siento triste?" -> getEmotionalInsights(userId, "tristeza")
                     - "Qué podría hacer para sentirme mejor?" -> recommendFacts(userId)
+                    - "Cómo me hace el fútbol?" -> getEmotionsFromFact(userId, "fútbol")
+                    - "Qué cosas me hacen sentir bien?" -> getEmotionalInsights(userId, "alegría")
                     - "Qué actividades me recomiendas?" -> recommendFacts(userId)
 
                     Instrucciones de respuesta:
@@ -339,7 +341,10 @@ export const aiService = {
                     - Si son sobre una emoción negativa o actividad, mantén un tono esperanzador
                     - Sé conciso pero amable (máximo 3 oraciones)
                     - Responde directamente a la pregunta original
-                    - Si los datos son limitados, sugiere amablemente formas de obtener más información`
+                    - Si los datos son limitados, sugiere amablemente formas de obtener más información
+                    - No suenes como un bot. Necesito que sea un lenguaje simple y sencillo. No abuses de signos de puntuación, o frases exageradas.
+                    - Ejemplo de respuesta: "El fútbol al parecer te gusta mucho, sin embargo no lo disfrutas mucho cuando pierdes"
+                    - Ejemplo de respuesta: "Las actividades que te hacen sentir mejor son caminar y meditar"`
                 },
                 {
                     role: "user",

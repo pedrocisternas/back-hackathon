@@ -2,51 +2,31 @@ import express from 'express';
 import { factService } from '../services/factService.js';
 import { journalProcessor } from '../services/journalProcessor.js';
 import { aiService } from '../services/aiService.js';
-import multer from 'multer';
 import { embeddingService } from '../services/embeddingService.js';
 import { getUserEntries, analyzeMood, determineMoodFromEntries } from '../utils/userRequests.js';
+import { getEmotionalInsights, getEmotionsFromFact } from '../utils/insightAnalyzer.js';
 
 const router = express.Router();
 
-// Ruta de prueba con texto hardcodeado
-router.post('/journal', async (req, res) => {
-  try {
-    const { text, user_id } = req.body;
-
-    if (!text || !user_id) {
-      return res.status(400).json({ 
-        error: 'Se requieren los campos "text" y "user_id"' 
-      });
+router.post('/journal-fast-response', async (req, res) => {
+    try {
+      console.log('🚀 Iniciando respuesta rápida con payload:', req.body);
+      const payload = req.body;
+  
+      const results = await aiService.getQuickAnalysis(payload);
+      res.json(results);
+    } catch (error) {
+      console.error('Error en POST /journal-fast-response:', error);
+      res.status(500).json({ error: error.message });
     }
-
-    console.log('🚀 Procesando entrada de diario:', { text, user_id });
-    const results = await journalProcessor.processJournalEntry(text, user_id);
-    res.json(results);
-  } catch (error) {
-    console.error('❌ Error en POST /journal:', error);
-    res.status(500).json({ error: error.message });
-  }
-});
-
-// Ruta de prueba para upsertFact
-router.post('/facts', async (req, res) => {
-  try {
-    const result = await factService.upsertFact(req.body);
-    res.json(result);
-  } catch (error) {
-    console.error('Error en POST /facts:', error);
-    res.status(500).json({ error: error.message });
-  }
-});
-
-const upload = multer();
+  });
 
 router.post('/chat', async (req, res) => {
   try {
     console.log('🚀 Iniciando chat con payload:', req.body);
     const payload = req.body;
 
-    const results = await aiService.processInput(payload);
+    const results = await aiService.processInput(payload, true);
     res.json(results);
   } catch (error) {
     console.error('Error en POST /chat:', error);
@@ -150,6 +130,81 @@ router.post('/search', async (req, res) => {
 
     } catch (error) {
         console.error('❌ Error en POST /search:', error);
+        res.status(500).json({ error: error.message });
+    }
+});
+
+router.post('/insights/emotion', async (req, res) => {
+    try {
+        const { userId, emotion } = req.body;
+
+        if (!userId || !emotion) {
+            return res.status(400).json({ 
+                error: 'Se requieren los campos "userId" y "emotion"' 
+            });
+        }
+
+        console.log('🔍 Buscando insights emocionales para:', { userId, emotion });
+
+        const insights = await getEmotionalInsights(userId, emotion);
+        
+        res.json({ 
+            success: true,
+            data: insights
+        });
+
+    } catch (error) {
+        console.error('❌ Error en POST /insights:', error);
+        res.status(500).json({ error: error.message });
+    }
+});
+
+router.post('/insights/fact', async (req, res) => {
+    try {
+        const { userId, fact } = req.body;
+
+        if (!userId || !fact) {
+            return res.status(400).json({ 
+                error: 'Se requieren los campos "userId" y "fact"' 
+            });
+        }
+
+        console.log('🔍 Buscando insights para el hecho:', { userId, fact });
+
+        const insights = await getEmotionsFromFact(userId, fact);
+        
+        res.json({ 
+            success: true,
+            data: insights
+        });
+
+    } catch (error) {
+        console.error('❌ Error en POST /insights/fact:', error);
+        res.status(500).json({ error: error.message });
+    }
+});
+
+router.post('/ai-insight', async (req, res) => {
+    try {
+        const { userId, question } = req.body;
+
+        if (!userId || !question) {
+            return res.status(400).json({ 
+                error: 'Se requieren los campos "userId" y "question"' 
+            });
+        }
+
+        console.log('🤖 Procesando pregunta:', { userId, question });
+
+        const response = await aiService.getInsightResponse(userId, question);
+        
+        res.json({ 
+            success: true,
+            data: response
+        });
+
+    } catch (error) {
+        console.error('❌ Error en POST /ai-insight:', error);
         res.status(500).json({ error: error.message });
     }
 });

@@ -8,6 +8,11 @@ import { getUserEntries, analyzeMood, determineMoodFromEntries, recommendFacts, 
 
 const router = express.Router();
 
+router.get('/', (req, res) => {
+  res.json({ message: 'Yournal API is running' });
+});
+
+
 router.post('/journal-fast-response', async (req, res) => {
     try {
       console.log('🚀 Iniciando respuesta rápida con payload:', req.body);
@@ -218,6 +223,7 @@ router.post('/ai-insight', async (req, res) => {
         console.log('🤖 Procesando pregunta:', { userId: userId, question });
 
         const response = await aiService.getInsightResponse(userId, question);
+        console.log("respuesta", response);
         
         res.json({ 
             success: true,

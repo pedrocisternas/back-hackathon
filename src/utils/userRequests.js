@@ -136,9 +136,12 @@ export function averageVectors(vectors) {
 
     vectors.forEach(vector => {
         vector.forEach((value, index) => {
-            averagedVector[index] += value;
+            if (Math.abs(value) > 0.00005) {
+                averagedVector[index] += value;
+            }
         });
     });
+    console.log(averagedVector);
 
     return averagedVector.map(value => value / vectors.length);
 }

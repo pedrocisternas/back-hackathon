@@ -1,6 +1,6 @@
+# Yournal - La Aplicación Inteligente de Reflexión y Recomendaciones 🦾🧠😊
 
-
-# 🌟 Yournal - La Aplicación Inteligente de Reflexión y Recomendaciones 🌟
+![WhatsApp Image 2024-11-24 at 05 19 09](https://github.com/user-attachments/assets/8ddb2e1f-44bb-4f12-a663-c513467ac540)
 
 Yournal es una aplicación innovadora que utiliza inteligencia artificial avanzada para analizar y proporcionar recomendaciones personalizadas basadas en el día a día de los usuarios. Mediante un flujo sofisticado de procesamiento de datos, Yournal transforma las entradas de los usuarios en insights valiosos que fomentan el bienestar y el autoconocimiento. A continuación, se describe la arquitectura de IA y el flujo de trabajo que hace posible esta experiencia única.
 

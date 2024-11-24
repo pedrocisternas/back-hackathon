@@ -237,6 +237,8 @@ export const aiService = {
 
                     Instrucciones para el uso de funciones:
                     - SIEMPRE intenta relacionar la pregunta con alguna de las funciones disponibles
+                    - Cuando el usuario pregunta por cosas que le gustan, asócialas con emociones positivas (felicidad, alegría)
+                    - Cuando el usuario pregunta por cosas que no le gustan, asócialas con emociones negativas (tristeza, rabia)
                     - Para preguntas sobre recomendaciones o decisiones específicas, usa getEmotionsFromFact
                     - Para preguntas sobre estados de ánimo o sentimientos, usa getEmotionalInsights
                     - Para preguntas sobre qué hacer o recomendaciones generales, usa recommendFacts
@@ -248,10 +250,12 @@ export const aiService = {
                     - "Cómo me hace el fútbol?" -> getEmotionsFromFact(userId, "fútbol")
                     - "Qué cosas me hacen sentir bien?" -> getEmotionalInsights(userId, "alegría")
                     - "Qué actividades me recomiendas?" -> recommendFacts(userId)
+                    - "Qué cosas me gustan?" -> getEmotionalInsights(userId, "felicidad")
+                    - "Qué no me gusta hacer?" -> getEmotionalInsights(userId, "tristeza")
 
                     Instrucciones de respuesta:
-                    - Para emociones positivas: enfócate SOLO en experiencias positivas
-                    - Para emociones negativas o actividades: mantén un tono constructivo
+                    - Para emociones positivas o cosas que gustan: enfócate SOLO en experiencias positivas
+                    - Para emociones negativas, cosas que no gustan o actividades: mantén un tono constructivo
                     - Sé conciso (máximo 3 oraciones)
                     - Si NO puedes relacionar la pregunta con ninguna función:
                       * Explica amablemente que no tienes datos suficientes

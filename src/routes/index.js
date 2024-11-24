@@ -3,8 +3,8 @@ import { factService } from '../services/factService.js';
 import { journalProcessor } from '../services/journalProcessor.js';
 import { aiService } from '../services/aiService.js';
 import { embeddingService } from '../services/embeddingService.js';
-import { getUserEntries, analyzeMood, determineMoodFromEntries } from '../utils/userRequests.js';
 import { getEmotionalInsights, getEmotionsFromFact } from '../utils/insightAnalyzer.js';
+import { getUserEntries, analyzeMood, determineMoodFromEntries, recommendFacts, recommendDoBetter, recommendGoodHabits } from '../utils/userRequests.js';
 
 const router = express.Router();
 
@@ -91,6 +91,25 @@ router.post('/mood', async (req, res) => {
     console.error('Error al procesar las recomendaciones:', error);
     return res.status(500).json({ error: 'Error al obtener el estado de ánimo y las recomendaciones.' });
   }
+});
+
+router.post('/recommendations', async (req, res) => {
+  const { userId } = req.body;
+  const recommendations = await recommendFacts(userId);
+  console.log(recommendations);
+  return res.status(200).json({ recommendations });
+});
+
+router.post('/dobetter', async (req, res) => {
+  const { userId } = req.body;
+  const recommendations = await recommendDoBetter(userId);
+  return res.status(200).json({ recommendations });
+});
+
+router.post('/goodhabits', async (req, res) => {
+  const { userId } = req.body;
+  const goodhabits = await recommendGoodHabits(userId);
+  return res.status(200).json({ goodhabits });
 });
 
 // Endpoint para buscar similitudes

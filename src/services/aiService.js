@@ -44,6 +44,9 @@ export const aiService = {
             {
               content: text,
               user_id: payload.user_id,
+              title: payload.analysis?.title,
+              description: payload.analysis?.description,
+              mood_emoji: payload.analysis?.mood_emoji,
             },
           ])
           .select()
@@ -194,7 +197,7 @@ export const aiService = {
         model: "gpt-4o-mini",
         messages: [{
           role: "system",
-          content: "Eres un psicólogo empático analizando el estado emocional del usuario. Analiza el texto y devuelve un JSON con el siguiente formato: { title: string (título emotivo que resuma el estado de ánimo), description: string (análisis profesional y empático hablándole directamente al usuario, en 12 palabras máximo. Que sea breve y al grano), mood_emoji: string (un emoji que represente el estado de ánimo), insights: Array<{text: string, type: 'positive' | 'negative'}> (entre 1 y 3 observaciones personalizadas sobre patrones o comportamientos identificados en el texto, cada una con su tipo) }"
+          content: "Eres un psicólogo empático analizando el estado emocional del usuario. Analiza el texto y devuelve un JSON con el siguiente formato: { title: string (título emotivo que resuma el estado de ánimo), description: string (análisis profesional y empático hablándole directamente al usuario, en 12 palabras máximo. Que sea breve y al grano), mood_emoji: string (sólo un emoji que represente el estado de ánimo), insights: Array<{text: string, type: 'positive' | 'negative'}> (entre 1 y 3 observaciones personalizadas sobre patrones o comportamientos identificados en el texto, cada una con su tipo) }"
         }, {
           role: "user",
           content: text
@@ -208,7 +211,11 @@ export const aiService = {
 
       // Procesar el texto en background sin esperar la respuesta
       console.log('🔄 [QUICK_ANALYSIS] Iniciando procesamiento en background');
-      this.processInput({ ...payload, journalEntryId: null }).catch(error => {
+      this.processInput({ 
+        ...payload, 
+        journalEntryId: null,
+        analysis: analysis  // Pasamos el análisis al processInput
+      }).catch(error => {
         console.error('[QUICK_ANALYSIS] Error en procesamiento background:', error);
       });
 

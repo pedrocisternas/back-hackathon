@@ -16,6 +16,5 @@ export async function initializePinecone() {
     }
 
     const index = pineconeInstance.Index(process.env.PINECONE_INDEX_NAME);
-    console.log('✅ Pinecone inicializado correctamente');
     return index;
 }

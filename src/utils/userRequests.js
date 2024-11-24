@@ -16,7 +16,6 @@ export async function getUserQueryVector(userId) {
             includeMetadata: true , // Asegurarnos de que los metadatos estén incluidos (hecho, emoción, etc.)
             includeValues: true
         });
-        console.log(queryResponse);
         
         // Extraer los vectores combinados de las entradas encontradas
         const userEntries = queryResponse.matches.map(match => ({
@@ -77,11 +76,6 @@ export async function getTodayUserQueryVector(userId) {
         const todayEntries = queryResponse.matches.filter(match => {
             const entryTimestamp = match.metadata.timestamp;
             return entryTimestamp >= startOfDay && entryTimestamp <= endOfDay;
-        });
-
-        console.log('Resultados encontrados:', {
-            totalMatches: todayEntries.length,
-            sampleMetadata: todayEntries[0]?.metadata
         });
 
         if (!todayEntries.length) {
@@ -155,7 +149,6 @@ export async function analyzeMood(userId) {
     
     // Solo trabajar con los k vecinos más cercanos que se devuelven de la consulta
     const similarEntries = queryResponse.matches.map(match => match.metadata);
-    console.log(similarEntries);
     // Determinar la emoción más común entre estos vecinos cercanos
     const mood = determineMoodFromEntries(similarEntries); 
 
@@ -166,7 +159,6 @@ export async function analyzeMood(userId) {
 export async function determineMoodFromEntries(entries) {
     // Recopilar todas las emociones de los entries
     const emotions = entries.map(entry => entry.emocion);
-    console.log(emotions);
     // Generar una consulta a OpenAI basada en la lista de emociones
     const mood = await determineMoodFromOpenAI(emotions);
 
@@ -197,7 +189,6 @@ export async function determineMoodFromEntries(entries) {
 
         // Procesar la respuesta de OpenAI
         const mood = response.choices[0].message.content.trim();
-        console.log(mood);
 
         return mood;
     } catch (error) {
@@ -239,7 +230,6 @@ export async function recommendFacts(userId) {
 
         // enviar un mensaje a openai con recomendaciones para el usuario basado en las filteredRecommendations que son las que lo hacen feliz
         const openaiRecommendations = await generateOpenAIRecommendations(filteredRecommendations);
-        console.log(openaiRecommendations);
 
         return openaiRecommendations;
 
@@ -338,7 +328,6 @@ export async function recommendGoodHabits(userId) {
                 habit,
                 score: userEntries.find(e => e.metadata.hecho === habit).score
             }))
-        console.log(sortedHabits);
 
         // Generar mensaje personalizado con OpenAI
         const response = await OpenAI.chat.completions.create({
@@ -418,7 +407,6 @@ export async function recommendDoBetter(userId) {
                 habit,
                 score: userEntries.find(e => e.metadata.hecho === habit).score
             }))
-        console.log(sortedHabits);
 
         // Generar mensaje personalizado con OpenAI
         const response = await OpenAI.chat.completions.create({

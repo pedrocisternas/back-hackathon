@@ -274,6 +274,14 @@ export async function generateOpenAIRecommendations(recommendations) {
                     Genera 3 recomendaciones en formato JSON,
                      cada una con una propiedad "mensaje", sugiriendo actividades para ser feliz.no seas directo en mencionar la felicidad, solo di cosas como "aprender un nuevo instrumento", "visita a un amigo", etc. No uses preguntas en las recomendaciones,
                      Las recomendaciones deben estar ligadas a las que te entregue y sus puntajes y no deben contener signos de exclamación, pregunta, etc. Haz recomendaciones cortas y directas.
+                     el formato es el siguiente: 
+                     {
+                        "recommendations": [
+                            {"mensaje": "..."},
+                            {"mensaje": "..."},
+                            {"mensaje": "..."}
+                        ]
+                    }
                     `
                 }
             ],
@@ -356,7 +364,7 @@ export async function recommendGoodHabits(userId) {
                             {"mensaje": "..."}
                         ]
                     }
-                    Usa un tono optimista e informal en español (chileno)".`
+                    Usa un tono optimista e informal en español (chileno).".`
                 }
             ],
             temperature: 0.7,

@@ -348,10 +348,15 @@ export async function recommendGoodHabits(userId) {
                         `${h.habit} , ${(h.score * 100)}% de felicidad)`
                     ).join("\n")}
                     
-                    Genera 3 mensajes en formato JSON reconociendo estos buenos hábitos,
-                    cada uno con una propiedad "mensaje". Los mensajes deben ser cortos,
-                    directos y motivadores, sin signos de exclamación ni preguntas. Se breve con cada uno y no uses exclamaciones.
-                    Deben ser 3 mensajes distintos en formato {"","",""}.`
+                    Genera exactamente 3 recomendaciones o menos si no hay suficiente info en el siguiente formato JSON:
+                    {
+                        "recommendations": [
+                            {"mensaje": ".. es un buen hábito"},
+                            {"mensaje": "...."},
+                            {"mensaje": "..."}
+                        ]
+                    }
+                    Usa un tono optimista e informal en español (chileno)".`
                 }
             ],
             temperature: 0.7,

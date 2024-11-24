@@ -3,6 +3,7 @@ import { journalProcessor } from './journalProcessor.js';
 import { embeddingService } from './embeddingService.js';
 import { supabase } from '../config/supabase.js';
 import { getEmotionalInsights, getEmotionsFromFact } from '../utils/insightAnalyzer.js';
+import { recommendFacts } from '../utils/userRequests.js';
 
 export const aiService = {
   async extractText(payload) {
@@ -228,20 +229,22 @@ export const aiService = {
             messages: [
                 {
                     role: "system",
-                    content: `Eres un asistente empático especializado en análisis emocional. Tienes acceso a dos funciones:
+                    content: `Eres un asistente empático especializado en análisis emocional. Tienes acceso a tres funciones:
                     1. getEmotionalInsights(userId, emotion): Para preguntas sobre estados emocionales
                     2. getEmotionsFromFact(userId, fact): Para preguntas sobre actividades específicas
+                    3. recommendFacts(userId): Para recomendar actividades que hacen feliz al usuario
 
                     Instrucciones para el uso de funciones:
                     - SIEMPRE intenta relacionar la pregunta con alguna de las funciones disponibles
-                    - Para preguntas sobre recomendaciones o decisiones, usa getEmotionsFromFact con la actividad mencionada
+                    - Para preguntas sobre recomendaciones o decisiones específicas, usa getEmotionsFromFact
                     - Para preguntas sobre estados de ánimo o sentimientos, usa getEmotionalInsights
+                    - Para preguntas sobre qué hacer o recomendaciones generales, usa recommendFacts
                     
                     Ejemplos de mapeo:
                     - "Me recomendarías seguir estudiando?" -> getEmotionsFromFact(userId, "estudiar")
-                    - "Debería cambiar de trabajo?" -> getEmotionsFromFact(userId, "trabajo")
                     - "Por qué me siento así?" -> getEmotionalInsights(userId, "tristeza")
-                    - "Qué me hace feliz?" -> getEmotionalInsights(userId, "felicidad")
+                    - "Qué podría hacer para sentirme mejor?" -> recommendFacts(userId)
+                    - "Qué actividades me recomiendas?" -> recommendFacts(userId)
 
                     Instrucciones de respuesta:
                     - Para emociones positivas: enfócate SOLO en experiencias positivas
@@ -281,6 +284,17 @@ export const aiService = {
                         },
                         required: ["userId", "fact"]
                     }
+                },
+                {
+                    name: "recommendFacts",
+                    description: "Recomienda actividades que hacen feliz al usuario basado en su historial. Dámsaleas en formato de lista, y con un vocabulario sencillo.",
+                    parameters: {
+                        type: "object",
+                        properties: {
+                            userId: { type: "string" }
+                        },
+                        required: ["userId"]
+                    }
                 }
             ],
             function_call: "auto",
@@ -305,6 +319,9 @@ export const aiService = {
         if (functionCall.name === "getEmotionalInsights") {
             const { emotion } = JSON.parse(functionCall.arguments);
             insightData = await getEmotionalInsights(userId, emotion);
+        } else if (functionCall.name === "recommendFacts") {
+            const { userId: uid } = JSON.parse(functionCall.arguments);
+            insightData = await recommendFacts(uid);
         } else {
             const { fact } = JSON.parse(functionCall.arguments);
             insightData = await getEmotionsFromFact(userId, fact);

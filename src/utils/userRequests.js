@@ -236,7 +236,6 @@ export async function recommendFacts(userId) {
         }));
         // filtrar los que tengan score mayor a 0.7
         const filteredRecommendations = recommendations.filter(recommendation => recommendation.score > 0.84);
-        console.log(filteredRecommendations);
 
         // enviar un mensaje a openai con recomendaciones para el usuario basado en las filteredRecommendations que son las que lo hacen feliz
         const openaiRecommendations = await generateOpenAIRecommendations(filteredRecommendations);

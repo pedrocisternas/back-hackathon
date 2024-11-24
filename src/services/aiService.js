@@ -28,14 +28,14 @@ export const aiService = {
     return text;
   },
 
-  async processInput(payload, skipJournalEntry = false) {
+  async processInput(payload) {
     console.time('[FULL_ANALYSIS] processInput');
     try {
       console.log('🔄 [FULL_ANALYSIS] Iniciando procesamiento completo');
       const text = await this.extractText({ ...payload, source: 'FULL_ANALYSIS' });
 
       let journalEntry;
-      if (!skipJournalEntry) {
+      
         // Create journal entry in Supabase
         console.time('[FULL_ANALYSIS] supabase-insert');
         const { data, error } = await supabase
@@ -60,7 +60,7 @@ export const aiService = {
         
         journalEntry = data;
         console.log('📔 Journal entry created:', journalEntry);
-      }
+      
 
       console.log('📝 Texto a procesar:', text);
 
@@ -211,13 +211,7 @@ export const aiService = {
 
       // Procesar el texto en background sin esperar la respuesta
       console.log('🔄 [QUICK_ANALYSIS] Iniciando procesamiento en background');
-      this.processInput({ 
-        ...payload, 
-        journalEntryId: null,
-        analysis: analysis  // Pasamos el análisis al processInput
-      }).catch(error => {
-        console.error('[QUICK_ANALYSIS] Error en procesamiento background:', error);
-      });
+      
 
       console.timeEnd('[QUICK_ANALYSIS] getQuickAnalysis');
       return analysis;
@@ -274,7 +268,7 @@ export const aiService = {
                     parameters: {
                         type: "object",
                         properties: {
-                            userId: { type: "string" },
+                            userId: { type: "integer" },
                             emotion: { type: "string" }
                         },
                         required: ["userId", "emotion"]
@@ -286,7 +280,7 @@ export const aiService = {
                     parameters: {
                         type: "object",
                         properties: {
-                            userId: { type: "string" },
+                            userId: { type: "integer" },
                             fact: { type: "string" }
                         },
                         required: ["userId", "fact"]
@@ -298,7 +292,7 @@ export const aiService = {
                     parameters: {
                         type: "object",
                         properties: {
-                            userId: { type: "string" }
+                            userId: { type: "integer" }
                         },
                         required: ["userId"]
                     }

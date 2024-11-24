@@ -4,7 +4,9 @@ import { embeddingService } from '../services/embeddingService.js';
 
 export async function getEmotionalInsights(userId, targetEmotion) {
     try {
-        // Generar embedding específico para la emoción
+        // Agregar log para debug
+        console.log('🔍 Buscando insights para:', { userId, targetEmotion });
+
         const emotionEmbedding = await embeddingService.generateEmbeddings({
             hecho: targetEmotion,
             emocion: targetEmotion
@@ -12,7 +14,7 @@ export async function getEmotionalInsights(userId, targetEmotion) {
 
         const index = await initializePinecone();
         
-        // Buscar usando el vector de emoción
+        // Primera búsqueda
         const queryResponse = await index.query({
             vector: emotionEmbedding.emocionVector,
             topK: 10,
@@ -23,15 +25,22 @@ export async function getEmotionalInsights(userId, targetEmotion) {
             }
         });
 
-        // Obtener los pair_ids de los matches relevantes
+        // Agregar log para ver resultados iniciales
+        console.log('📊 Matches encontrados:', queryResponse.matches.length);
+        console.log('🎯 Scores:', queryResponse.matches.map(m => m.score));
+
+        // Reducir el umbral de similitud
         const relevantPairIds = queryResponse.matches
-            .filter(match => match.score > 0.85)
+            .filter(match => match.score > 0.6) // Umbral más permisivo
             .map(match => match.metadata.pair_id);
 
-        // Buscar los hechos correspondientes usando los pair_ids
+        // Log para debug
+        console.log('🔗 Pairs relevantes encontrados:', relevantPairIds.length);
+
+        // Segunda búsqueda
         const factsResponse = await index.query({
             vector: emotionEmbedding.emocionVector,
-            topK: relevantPairIds.length,
+            topK: Math.max(1, relevantPairIds.length),
             includeMetadata: true,
             filter: { 
                 user_id: userId,
@@ -67,6 +76,13 @@ export async function getEmotionalInsights(userId, targetEmotion) {
 
     } catch (error) {
         console.error('Error al obtener insights emocionales:', error);
+        // Agregar más detalles al error
+        console.error('Detalles:', {
+            userId,
+            targetEmotion,
+            error: error.message,
+            stack: error.stack
+        });
         throw error;
     }
 }
@@ -146,7 +162,7 @@ export async function getEmotionsFromFact(userId, targetFact) {
         // Buscar las emociones correspondientes usando los pair_ids
         const emotionsResponse = await index.query({
             vector: factEmbedding.hechoVector,
-            topK: relevantPairIds.length,
+            topK: Math.max(1, relevantPairIds.length),
             includeMetadata: true,
             filter: { 
                 user_id: userId,

@@ -14,6 +14,7 @@ router.post('/journal-fast-response', async (req, res) => {
       const payload = req.body;
   
       const results = await aiService.getQuickAnalysis(payload);
+      console.log("retornando ctm");
       res.json(results);
     } catch (error) {
       console.error('Error en POST /journal-fast-response:', error);
@@ -26,7 +27,7 @@ router.post('/chat', async (req, res) => {
     console.log('🚀 Iniciando chat con payload:', req.body);
     const payload = req.body;
 
-    const results = await aiService.processInput(payload, true);
+    const results = await aiService.processInput(payload);
     res.json(results);
   } catch (error) {
     console.error('Error en POST /chat:', error);
@@ -213,7 +214,8 @@ router.post('/ai-insight', async (req, res) => {
             });
         }
 
-        console.log('🤖 Procesando pregunta:', { userId, question });
+
+        console.log('🤖 Procesando pregunta:', { userId: userId, question });
 
         const response = await aiService.getInsightResponse(userId, question);
         

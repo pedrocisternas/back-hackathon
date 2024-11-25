@@ -7,6 +7,7 @@ import {
   getEmotionsFromFact,
 } from '../utils/insightAnalyzer.js';
 import { recommendFacts } from '../utils/userRequests.js';
+import { File, Blob } from 'node:buffer';
 
 export const aiService = {
   async extractText(payload) {
@@ -103,6 +104,7 @@ export const aiService = {
   async transcribeAudio(payload) {
     const source = payload.source;
     console.time(`[${source}] transcribeAudio`);
+    let audioBlob;
     try {
       console.log(`🎤 [${source}] Descargando audio desde:`, payload.content);
 
@@ -113,7 +115,7 @@ export const aiService = {
       }
 
       // Obtener el blob directamente
-      const audioBlob = await response.blob();
+      audioBlob = await response.blob();
 
       // Detectar el tipo MIME real del blob
       const actualType = audioBlob.type;

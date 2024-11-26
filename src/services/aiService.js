@@ -215,13 +215,21 @@ export const aiService = {
           DEBES responder SIEMPRE en el siguiente formato JSON, sin excepciones:
       
           {
-            "title": string (título emotivo de máximo 6 palabras, DEFAULT: "Estado de ánimo no determinado"),
-            "description": string (análisis profesional y empático en segunda persona, máximo 12 palabras, DEFAULT: "No hay suficiente información para un análisis detallado"),
-            "mood_emoji": string (EXACTAMENTE 1 emoji, DEFAULT: "😐"),
+            "title": string (título emotivo de máximo 6 palabras, DEFAULT: "Estado de ánimo no determinado", ej: "Hoy te sientes muy optimista"),
+            "description": string (análisis profesional y empático en segunda persona, máximo 12 palabras, DEFAULT: "No hay suficiente información para un análisis detallado", ej: "Muestras una actitud positiva y motivada hacia tus metas"),
+            "mood_emoji": string (EXACTAMENTE 1 emoji, DEFAULT: "😐", ej: "🌟"),
             "insights": [
               {
-                "text": string (observación sobre patrones o comportamientos, DEFAULT: "No hay suficientes datos para generar insights"),
-                "type": string (DEBE ser 'positive' o 'negative', DEFAULT: "negative")
+                "text": string (observación sobre patrones o comportamientos, DEFAULT: "No hay suficientes datos para generar insights", ej: "Te esfuerzas por mantener relaciones positivas"),
+                "type": string (DEBE ser 'positive' o 'negative', DEFAULT: "negative", ej: "positive")
+              },
+              {
+                "text": string (observación sobre patrones o comportamientos, DEFAULT: "No hay suficientes datos para generar insights", ej: "Tiendes a ser muy autocrítico"),
+                "type": string (DEBE ser 'positive' o 'negative', DEFAULT: "negative", ej: "negative") 
+              },
+              {
+                "text": string (observación sobre patrones o comportamientos, DEFAULT: "No hay suficientes datos para generar insights", ej: "Muestras iniciativa para resolver problemas"),
+                "type": string (DEBE ser 'positive' o 'negative', DEFAULT: "negative", ej: "positive")
               }
             ]
           }
@@ -229,7 +237,7 @@ export const aiService = {
           REGLAS ESTRICTAS:
           1. NUNCA devuelvas un formato diferente
           2. Si falta información, usa los valores DEFAULT especificados
-          3. Siempre incluye al menos un insight
+          3. DEBES incluir 3 insights si hay suficiente información, si no 2, y como mínimo 1
           4. No agregues campos adicionales
           5. No omitas ningún campo
           6. No incluyas comentarios ni texto adicional fuera del JSON`,

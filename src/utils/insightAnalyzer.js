@@ -4,7 +4,7 @@ import { embeddingService } from '../services/embeddingService.js';
 
 export async function getEmotionalInsights(userId, targetEmotion) {
     try {
-        // Agregar log para debug
+        // Agregar log para debuggear
         console.log('🔍 Buscando insights para:', { userId, targetEmotion });
 
         const emotionEmbedding = await embeddingService.generateEmbeddings({
@@ -14,7 +14,7 @@ export async function getEmotionalInsights(userId, targetEmotion) {
 
         const index = await initializePinecone();
         
-        // Primera búsqueda
+        // Primera búsqueda 
         const queryResponse = await index.query({
             vector: emotionEmbedding.emocionVector,
             topK: 10,

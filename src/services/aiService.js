@@ -183,7 +183,7 @@ export const aiService = {
       console.timeEnd(`[${source}] transcribeAudio`);
       return transcription;
     } catch (error) {
-      console.error(`❌ [${source}] Error transcribiendo audio:`, error);
+      console.error(`❌ [${source}] Error transcribiendo el audio:`, error);
       console.error('Detalles del error:', {
         message: error.message,
         name: error.name,
